@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.*
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
@@ -35,6 +37,9 @@ class ActivityStory : AppCompatActivity() {
     lateinit var favoriteButton: FloatingActionButton
     lateinit var scrollView: ScrollView
 
+    lateinit var fadeEnter: Animation
+    lateinit var fadeExit: Animation
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppDefault)
         super.onCreate(savedInstanceState)
@@ -44,6 +49,9 @@ class ActivityStory : AppCompatActivity() {
 
         initViews()
         initITHMenu()
+
+        fadeExit = AnimationUtils.loadAnimation(this, R.anim.abc_fade_out)
+        fadeEnter = AnimationUtils.loadAnimation(this, R.anim.abc_fade_in)
 
         val loadedUser = loadUserFromFile(app.userFile)
 
@@ -131,7 +139,7 @@ class ActivityStory : AppCompatActivity() {
             try {
                 app.currentStory = app.session!!.loadCurrentStory()
                 runOnUiThread {
-                    updateUI(app.currentStory!!)
+                    updateUI(app.currentStory!!, true)
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -146,7 +154,7 @@ class ActivityStory : AppCompatActivity() {
             try {
                 app.currentStory = app.session!!.decreaseAndLoad()
                 runOnUiThread {
-                    updateUI(app.currentStory!!)
+                    updateUI(app.currentStory!!, true)
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -161,7 +169,7 @@ class ActivityStory : AppCompatActivity() {
             try {
                 app.currentStory = app.session!!.increaseAndLoad()
                 runOnUiThread {
-                    updateUI(app.currentStory!!)
+                    updateUI(app.currentStory!!, true)
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -169,12 +177,24 @@ class ActivityStory : AppCompatActivity() {
         })
     }
 
-    private fun updateUI(story: Story) {
+    private fun updateUI(story: Story, needAnim: Boolean) {
+        if (needAnim) {
+            storyContent.startAnimation(fadeExit)
+            storyTitle.startAnimation(fadeExit)
+            storyDate.startAnimation(fadeExit)
+            storyTags.startAnimation(fadeExit)
+        }
         storyTitle.text = "#${story.id}: ${story.title}"
         storyDate.text = story.date
         storyTags.text = story.tags.reduce({ s1, s2 -> "$s1, $s2" })
         storyContent.text = story.content
         setFavorite(Random().nextBoolean())
+        if (needAnim) {
+            storyContent.startAnimation(fadeEnter)
+            storyTitle.startAnimation(fadeEnter)
+            storyDate.startAnimation(fadeEnter)
+            storyTags.startAnimation(fadeEnter)
+        }
     }
 
     private fun setFavorite(fav: Boolean) = favoriteButton.setImageResource(if (fav) {
