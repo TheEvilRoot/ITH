@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">ITH</string>
+    <string name="loginTitle">Вход в систему</string>
+    <string name="loginButtonTitle">Авторизоваться</string>
+</resources>
