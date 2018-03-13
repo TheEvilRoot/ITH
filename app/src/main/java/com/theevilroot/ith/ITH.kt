@@ -21,7 +21,7 @@ class ITH : Application() {
         if (session == null)
             return false
         val field = ITHApi::class.java.getDeclaredField("isLogged")
-        field.isAccessible = true;
+        field.isAccessible = true
         return field.getBoolean(session)
     }
 
