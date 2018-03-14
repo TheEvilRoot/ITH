@@ -18,11 +18,7 @@ class ITH : Application() {
     }
 
     fun isLogged(): Boolean {
-        if (session == null)
-            return false
-        val field = ITHApi::class.java.getDeclaredField("isLogged")
-        field.isAccessible = true
-        return field.getBoolean(session)
+        return session != null && session!!.isLogged
     }
 
 }

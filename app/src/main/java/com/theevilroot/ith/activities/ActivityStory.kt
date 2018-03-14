@@ -1,22 +1,24 @@
 package com.theevilroot.ith.activities
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.*
+import android.widget.EditText
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.theevilroot.ith.ITH
 import com.theevilroot.ith.OnSwipeTouchListener
 import com.theevilroot.ith.R
+import com.theevilroot.ith.adapters.ITHMenuItemAdapter
+import com.theevilroot.ith.adapters.items
 import com.theevilroot.ithapi.ITHApi
 import com.theevilroot.ithapi.Story
 import java.io.File
@@ -98,6 +100,7 @@ class ActivityStory : AppCompatActivity() {
                 if (username.text.isBlank()) {
                     di.dismiss()
                     this.manualLogin(userFile)
+                    return@setPositiveButton
                 }
                 saveUser(userFile, username.text.toString())
                 createSession(username.text.toString())
@@ -177,6 +180,21 @@ class ActivityStory : AppCompatActivity() {
         })
     }
 
+    private fun loadStoryByIndex(id: Int) {
+        if (!app.isLogged())
+            return
+        thread(start = true, block = {
+            try {
+                app.currentStory = app.session!!.setAndLoadStory(id)
+                runOnUiThread {
+                    updateUI(app.currentStory!!, true)
+                }
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        })
+    }
+
     private fun updateUI(story: Story, needAnim: Boolean) {
         if (needAnim) {
             storyContent.startAnimation(fadeExit)
@@ -223,65 +241,46 @@ class ActivityStory : AppCompatActivity() {
         ithButton.setOnClickListener {
             if (!app.isLogged())
                 return@setOnClickListener
-            AlertDialog.Builder(this).setAdapter(ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, arrayOf(
-                    "Открыть в браузере",
-                    "Копировать ссылку",
-                    "Копировать историю 0_0",
-                    "Поделиться в...",
-                    "Перейти к...",
-                    "Избранные",
-                    "Сменить пользователя",
-                    "О Программе"
-            )), { di, index ->
-                when (index) {
-                    0 -> { // Open in browser
-                        val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse("http://ithappens.me/story/${app.session!!.story}"))
-                        startActivity(browserIntent)
-                    }
-                    1 -> { // Copy link
-                        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("ith_link", "http://ithappens.me/story/${app.session!!.story}")
-                        clipboard.primaryClip = clip
-                    }
-                    2 -> { // Copy story
-                        val clipboard = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("ith_story", "#${app.currentStory!!.id}: ${app.currentStory!!.title}\n\n${app.currentStory!!.content}")
-                        clipboard.primaryClip = clip
-                    }
-                    3 -> { // Share
-                        shareStory(app.session!!.story)
-                    }
-                    4 -> {
-                        showGotoDialog()
-                    }
-                    5 -> {
-                        showFavorites()
-                    }
-                    6 -> {
-                        app.userFile.delete()
-                        this.recreate()
-                    }
-                    7 -> {
-                        showAbout()
-                    }
-                }
-            }).setTitle("Пользователь: ${app.username}").setIcon(R.drawable.account).create().show()
+            AlertDialog.Builder(this).setAdapter(ITHMenuItemAdapter(this), { di, index ->
+                if (index >= items.size)
+                    return@setAdapter
+                val item = items[index]
+                item.action.invoke(di, this, app)
+                Toast.makeText(this, item.title, Toast.LENGTH_SHORT).show()
+            }).setTitle("Пользователь: ${app.username}").create().show()
         }
     }
 
-    private fun showAbout() {
+    fun showAbout() {
         //AlertDialog.Builder(this).setTitle("О Программе ITH").setIcon(R.mipmap.ic_ith_round).setMessage()
     }
 
-    private fun showFavorites() {
+    fun showFavorites() {
 
     }
 
-    private fun showGotoDialog() {
-
+    fun showGotoDialog() {
+        val view = layoutInflater.inflate(R.layout.layout_goto_story, null, false)
+        AlertDialog.Builder(this).setTitle(R.string.goto_story_title).setView(view).setPositiveButton(R.string.goto_story_button_title, { di, _ ->
+            val input = view.findViewById<EditText>(R.id.goto_story_index_input_field)
+            if (input.text.isBlank()) {
+                di.dismiss()
+                showGotoDialog()
+                return@setPositiveButton
+            }
+            val index = try {
+                input.text.toString().toInt()
+            } catch (e: NumberFormatException) {
+                di.dismiss();
+                showGotoDialog()
+                return@setPositiveButton
+            }
+            loadStoryByIndex(index)
+            di.dismiss()
+        }).create().show()
     }
 
-    private fun shareStory(id: Int) {
+    fun shareStory(id: Int) {
         val sendIntent = Intent()
         sendIntent.action = Intent.ACTION_SEND
         sendIntent.putExtra(Intent.EXTRA_TEXT, "http://ithappens.me/story/$id")

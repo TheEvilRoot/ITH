@@ -2,4 +2,14 @@
     <string name="app_name">ITH</string>
     <string name="loginTitle">Вход в систему</string>
     <string name="loginButtonTitle">Авторизоваться</string>
+    <string name="ith_menu_open_in_browser_title">Открыть в браузере</string>
+    <string name="ith_menu_copy_link_title">Копировать ссылку</string>
+    <string name="ith_menu_copy_story_title">Копировать историю</string>
+    <string name="ith_menu_share_link_title">Поделиться ссылкой</string>
+    <string name="ith_menu_goto_story_title">Перейти к…</string>
+    <string name="goto_story_title">Введите индекс истории:</string>
+    <string name="goto_story_button_title">Перейти</string>
+    <string name="ith_menu_show_favorite_title">Избранные</string>
+    <string name="ith_menu_logout_title">Сменитьь пользователя</string>
+    <string name="ith_menu_about_title">О Программе</string>
 </resources>
