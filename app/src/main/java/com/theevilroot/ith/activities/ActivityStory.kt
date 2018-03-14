@@ -42,6 +42,8 @@ class ActivityStory : AppCompatActivity() {
     lateinit var fadeEnter: Animation
     lateinit var fadeExit: Animation
 
+    var lock: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppDefault)
         super.onCreate(savedInstanceState)
@@ -136,13 +138,15 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadStory() {
-        if (!app.isLogged())
+        if (!app.isLogged() || lock)
             return
+        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.loadCurrentStory()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
+                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -151,13 +155,15 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadPrevStory() {
-        if (!app.isLogged())
+        if (!app.isLogged() || lock)
             return
+        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.decreaseAndLoad()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
+                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -166,13 +172,15 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadNextStory() {
-        if (!app.isLogged())
+        if (!app.isLogged() || lock)
             return
+        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.increaseAndLoad()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
+                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -181,13 +189,15 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadStoryByIndex(id: Int) {
-        if (!app.isLogged())
+        if (!app.isLogged() || lock)
             return
+        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.setAndLoadStory(id)
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
+                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
