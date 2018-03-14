@@ -251,7 +251,7 @@ class ActivityStory : AppCompatActivity() {
         ithButton.setOnClickListener {
             if (!app.isLogged())
                 return@setOnClickListener
-            AlertDialog.Builder(this).setAdapter(ITHMenuItemAdapter(this), { di, index ->
+            AlertDialog.Builder(this, R.style.AppTheme_Menu).setAdapter(ITHMenuItemAdapter(this), { di, index ->
                 if (index >= items.size)
                     return@setAdapter
                 val item = items[index]
