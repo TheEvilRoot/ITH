@@ -2,9 +2,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:orientation="vertical"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingHorizontal="10dp">
 
     <EditText
+        android:hint="@string/story_index_hint"
+        android:inputType="numberDecimal"
         android:id="@+id/goto_story_index_input_field"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

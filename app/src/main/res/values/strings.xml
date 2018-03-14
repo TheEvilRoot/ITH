@@ -12,4 +12,6 @@
     <string name="ith_menu_show_favorite_title">Избранные</string>
     <string name="ith_menu_logout_title">Сменитьь пользователя</string>
     <string name="ith_menu_about_title">О Программе</string>
+    <string name="username_hint">Имя пользователя</string>
+    <string name="story_index_hint">Номер истории</string>
 </resources>
