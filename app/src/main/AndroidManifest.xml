@@ -21,5 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".activities.ActivityFavorites"
+            android:label="@string/favorites_title"
+            android:theme="@style/AppDefault" />
     </application>
 </manifest>

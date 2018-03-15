@@ -1,10 +1,12 @@
 package com.theevilroot.ith.activities
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.FloatingActionButton
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import android.text.Html
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.EditText
@@ -21,6 +23,7 @@ import com.theevilroot.ith.adapters.ITHMenuItemAdapter
 import com.theevilroot.ith.adapters.items
 import com.theevilroot.ithapi.ITHApi
 import com.theevilroot.ithapi.Story
+import org.jsoup.Jsoup
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -41,8 +44,6 @@ class ActivityStory : AppCompatActivity() {
 
     lateinit var fadeEnter: Animation
     lateinit var fadeExit: Animation
-
-    var lock: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         setTheme(R.style.AppDefault)
@@ -92,6 +93,27 @@ class ActivityStory : AppCompatActivity() {
         }
 
         scrollView.setOnTouchListener(listener)
+
+        favoriteButton.setOnClickListener {
+            if (!app.isLogged())
+                return@setOnClickListener
+            val isFav = app.favorites.contains(app.session!!.story)
+            updateFavorite(!isFav)
+        }
+    }
+
+    private fun updateFavorite(b: Boolean) {
+        thread(start = true, block = {
+            Jsoup.connect("http://52.48.142.75/backend/ITH.php").data("task", if (b) {
+                "setFavorite"
+            } else {
+                "unsetFavorite"
+            }).data("name", app.username).data("story", app.session!!.story.toString()).post().text()
+            app.loadFavorites()
+            runOnUiThread {
+                setFavorite(app.favorites.contains(app.session!!.story))
+            }
+        })
     }
 
     private fun manualLogin(userFile: File) {
@@ -130,6 +152,7 @@ class ActivityStory : AppCompatActivity() {
         thread(start = true, block = {
             try {
                 app.session!!.auth()
+                app.loadFavorites()
                 loadStory()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -138,15 +161,13 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadStory() {
-        if (!app.isLogged() || lock)
+        if (!app.isLogged())
             return
-        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.loadCurrentStory()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
-                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -155,15 +176,13 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadPrevStory() {
-        if (!app.isLogged() || lock)
+        if (!app.isLogged())
             return
-        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.decreaseAndLoad()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
-                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -172,15 +191,13 @@ class ActivityStory : AppCompatActivity() {
     }
 
     private fun loadNextStory() {
-        if (!app.isLogged() || lock)
+        if (!app.isLogged())
             return
-        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.increaseAndLoad()
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
-                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -188,16 +205,15 @@ class ActivityStory : AppCompatActivity() {
         })
     }
 
-    private fun loadStoryByIndex(id: Int) {
-        if (!app.isLogged() || lock)
+    fun loadStoryByIndex(id: Int) {
+        if (!app.isLogged())
             return
-        lock = true
         thread(start = true, block = {
             try {
                 app.currentStory = app.session!!.setAndLoadStory(id)
+
                 runOnUiThread {
                     updateUI(app.currentStory!!, true)
-                    lock = false
                 }
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
@@ -205,6 +221,7 @@ class ActivityStory : AppCompatActivity() {
         })
     }
 
+    @SuppressLint("SetTextI18n")
     private fun updateUI(story: Story, needAnim: Boolean) {
         if (needAnim) {
             storyContent.startAnimation(fadeExit)
@@ -214,9 +231,12 @@ class ActivityStory : AppCompatActivity() {
         }
         storyTitle.text = "#${story.id}: ${story.title}"
         storyDate.text = story.date
-        storyTags.text = story.tags.reduce({ s1, s2 -> "$s1, $s2" })
-        storyContent.text = story.content
-        setFavorite(Random().nextBoolean())
+        if (story.tags.isNotEmpty())
+            storyTags.text = story.tags.reduce({ s1, s2 -> "$s1, $s2" })
+        else
+            storyTags.text = ""
+        storyContent.text = Html.fromHtml(story.content, 0)
+        setFavorite(app.favorites.contains(story.id))
         if (needAnim) {
             storyContent.startAnimation(fadeEnter)
             storyTitle.startAnimation(fadeEnter)
@@ -266,7 +286,8 @@ class ActivityStory : AppCompatActivity() {
     }
 
     fun showFavorites() {
-
+        val intent = Intent(this, ActivityFavorites::class.java)
+        startActivity(intent)
     }
 
     fun showGotoDialog() {
@@ -281,7 +302,7 @@ class ActivityStory : AppCompatActivity() {
             val index = try {
                 input.text.toString().toInt()
             } catch (e: NumberFormatException) {
-                di.dismiss();
+                di.dismiss()
                 showGotoDialog()
                 return@setPositiveButton
             }
@@ -290,12 +311,5 @@ class ActivityStory : AppCompatActivity() {
         }).create().show()
     }
 
-    fun shareStory(id: Int) {
-        val sendIntent = Intent()
-        sendIntent.action = Intent.ACTION_SEND
-        sendIntent.putExtra(Intent.EXTRA_TEXT, "http://ithappens.me/story/$id")
-        sendIntent.type = "text/plain"
-        startActivity(sendIntent)
-    }
 
 }

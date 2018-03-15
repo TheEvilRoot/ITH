@@ -32,7 +32,7 @@ val items: Array<ITHMenuItem> = arrayOf(
             clipboard.primaryClip = clip
         }),
         ITHMenuItem(R.string.ith_menu_share_link_title, R.drawable.share, { di, activity, app ->
-            activity.shareStory(app.session!!.story)
+            app.shareStory(app.session!!.story)
         }),
         ITHMenuItem(R.string.ith_menu_goto_story_title, R.drawable.chevron_right, { di, activity, app ->
             activity.showGotoDialog()
